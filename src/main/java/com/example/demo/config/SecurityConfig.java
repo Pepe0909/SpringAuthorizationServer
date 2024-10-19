@@ -7,6 +7,8 @@ import java.security.interfaces.RSAPublicKey;
 import java.util.Arrays;
 import java.util.UUID;
 
+import com.example.demo.handler.CustomAuthenticateEntryPoint;
+import com.example.demo.handler.CustomAuthenticationFailureHandler;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
@@ -56,16 +58,21 @@ public class SecurityConfig {
             throws Exception {
         OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
         http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
+                .clientAuthentication(clientAuth ->
+                        clientAuth.errorResponseHandler(new CustomAuthenticationFailureHandler())
+                )
                 .oidc(Customizer.withDefaults());	// Enable OpenID Connect 1.0
         http.cors(cors -> cors.configurationSource(corsConfigurationSource()));
+
         http
                 // Redirect to the login page when not authenticated from the
                 // authorization endpoint
                 .exceptionHandling((exceptions) -> exceptions
-                        .defaultAuthenticationEntryPointFor(
-                                new LoginUrlAuthenticationEntryPoint("/login"),
-                                new MediaTypeRequestMatcher(MediaType.TEXT_HTML)
-                        )
+//                        .defaultAuthenticationEntryPointFor(
+//                                new LoginUrlAuthenticationEntryPoint("/login"),
+//                                new MediaTypeRequestMatcher(MediaType.TEXT_HTML)
+                                .authenticationEntryPoint(new CustomAuthenticateEntryPoint())
+
                 )
                 // Accept access tokens for User Info and/or Client Registration
                 .oauth2ResourceServer((resourceServer) -> resourceServer
